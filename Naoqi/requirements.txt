@@ -1,0 +1,31 @@
+sudo apt install pyenv
+pyenv install 2.7
+pyenv local 2.7
+
+python2.7 -m ensurepip || true
+python2.7 -m pip install --upgrade pip
+python2.7 -m pip install virtualenv
+
+virtualenv .venv
+
+source .venv/bin/activate
+
+pip install pyzmq
+
+export PYTHONPATH="$HOME/choregraphe/naoqi/pynaoqi-python2.7-2.1.4.13-linux64:$PYTHONPATH"
+
+# 1. Create a NEW file (note the .list extension)
+sudo nano /etc/apt/sources.list.d/trusty.list
+
+# 2. Paste THESE two lines into the EMPTY file:
+deb http://archive.ubuntu.com/ubuntu trusty main universe
+deb http://archive.ubuntu.com/ubuntu trusty-updates main universe
+
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
+
+# 1. This should now complete without GPG errors
+sudo apt-get update
+
+# 2. This should now find and install the packages
+sudo apt-get install libboost-regex1.55.0 libboost-python1.55.0 libboost-system1.55.0 libboost-thread1.55.0 libboost-chrono1.55.0
