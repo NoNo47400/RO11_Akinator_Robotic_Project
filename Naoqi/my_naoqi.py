@@ -1,7 +1,7 @@
 from naoqi import ALProxy, ALModule, ALBroker
 import sys
 import time
-import zmq # Import zmq
+import zmq 
 
 # --- Setup ZMQ Client ---
 context = zmq.Context()
@@ -9,13 +9,16 @@ print("Connecting to Akinator server...")
 socket = context.socket(zmq.REQ) # REQ = Request
 socket.connect("tcp://akinator_server:5555")
 
-robot_ip = "host.docker.internal"  
+#robot_ip = "host.docker.internal"  # Only for simulation
+robot_ip = "192.168.2.121" # Real robot IP
 robot_port = 9559
 list_of_words = ["yes", "no", "i don't know"]
 
 # Create a broker to handle modules and events
-port = 9559  # local port for broker, can be any free port
 broker = ALBroker("myBroker", "0.0.0.0", 0, robot_ip, robot_port)
+print("ALBroker created. Waiting a bit...")
+time.sleep(2) # Wait for everything to settle (SpeechRecognition etc...)
+print("Attempting to create proxies...") 
 
 class SpeechRecognitionModule(ALModule):
     def __init__(self, name):
@@ -32,14 +35,14 @@ class SpeechRecognitionModule(ALModule):
         self.value = word
 
 # Instantiate objects
-speech_recog = ALProxy("ALSpeechRecognition", robot_ip, robot_port)
+speech_recog = ALProxy("ALSpeechRecognition", robot_ip, robot_port) # Not working in simulation because no microphone
 tts = ALProxy("ALTextToSpeech", robot_ip, robot_port)
 memory = ALProxy("ALMemory", robot_ip, robot_port)
 obj_recognition = SpeechRecognitionModule("SpeechRecognitionModule")
 
 # Configure speech recognition
 speech_recog.pause(True)
-speech_recog.setVocabulary(list_of_words, False)
+speech_recog.setVocabulary(list_of_words, False) # Help reduce false positives
 speech_recog.pause(False)
 
 # Subscribe once before the loop
@@ -47,6 +50,23 @@ speech_recog.subscribe("SpeechRecognitionModule")
 memory.subscribeToEvent("WordRecognized", "SpeechRecognitionModule", "onWordRecognized")
 
 try:
+    # First question 
+    question = socket.recv_string()
+
+    print(question)
+    tts.say(question)
+    
+    # Wait for speech input
+    while not obj_recognition.new_value:
+        time.sleep(0.1)
+    obj_recognition.new_value = False
+    
+    # Send the answer back to the Py3 server
+    print("Sending answer: " + obj_recognition.value.lower())
+    socket.send_string(obj_recognition.value.lower())
+    
+    _ = socket.recv_string() 
+    
     while True:
         # Request the next question from the Py3 server
         socket.send_string("next_q")
@@ -78,7 +98,6 @@ try:
 
 
 finally:
-    # ... (your cleanup code)
     socket.send_string("STOP") # Tell the server to shut down
     broker.shutdown()
     sys.exit(0)
