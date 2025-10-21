@@ -2,7 +2,7 @@ import akinator
 import zmq
 
 context = zmq.Context()
-socket = context.socket(zmq.PAIR) # PAIR = Pair
+socket = context.socket(zmq.REP) # REP = Reply
 socket.bind("tcp://*:5555")
 
 aki = akinator.Akinator()
