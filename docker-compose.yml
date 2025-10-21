@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  akinator_server:
+    build:
+      context: .
+      dockerfile: akinator.Dockerfile
+    container_name: akinator_server
+    # This setup uses a REQ/REP pattern, 
+    # so ports don't need to be exposed to the host.
+    # The 'naoqi_bridge' will access it via its service name.
+
+  naoqi_bridge:
+    build:
+      context: .
+      dockerfile: naoqi.Dockerfile
+    container_name: naoqi_bridge
+    # This allows the container to access your host machine
+    # (and Choregraphe) using the DNS name "host.docker.internal"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - akinator_server

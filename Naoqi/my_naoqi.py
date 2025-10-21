@@ -7,9 +7,9 @@ import zmq # Import zmq
 context = zmq.Context()
 print("Connecting to Akinator server...")
 socket = context.socket(zmq.REQ) # REQ = Request
-socket.connect("tcp://localhost:5555")
+socket.connect("tcp://akinator_server:5555")
 
-robot_ip = "127.0.0.1"
+robot_ip = "host.docker.internal"  
 robot_port = 9559
 list_of_words = ["yes", "no", "i don't know"]
 
