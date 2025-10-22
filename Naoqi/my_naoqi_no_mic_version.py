@@ -56,10 +56,9 @@ try:
         if question.startswith("FINAL:"):
             # End of the game, akinator sent the guess
             guess = question.replace("FINAL:", "")
-            final_line = "Are you thinking about " + guess
             print("Final guess: " + guess)
             if not terminal_mode:
-                tts.say(str(final_line)) # Don't work in simulation don't know why
+                tts.say(str("Are you thinking about " + guess)) # Don't work in simulation don't know why
                 pass
             break # Go to "finally" section
 
