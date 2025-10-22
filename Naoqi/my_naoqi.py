@@ -49,24 +49,7 @@ speech_recog.pause(False)
 speech_recog.subscribe("SpeechRecognitionModule")
 memory.subscribeToEvent("WordRecognized", "SpeechRecognitionModule", "onWordRecognized")
 
-try:
-    # First question 
-    question = socket.recv_string()
-
-    print(question)
-    tts.say(question)
-    
-    # Wait for speech input
-    while not obj_recognition.new_value:
-        time.sleep(0.1)
-    obj_recognition.new_value = False
-    
-    # Send the answer back to the Py3 server
-    print("Sending answer: " + obj_recognition.value.lower())
-    socket.send_string(obj_recognition.value.lower())
-    
-    _ = socket.recv_string() 
-    
+try:  
     while True:
         # Request the next question from the Py3 server
         socket.send_string("next_q")
