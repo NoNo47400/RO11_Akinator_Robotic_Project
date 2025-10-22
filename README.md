@@ -8,5 +8,7 @@ docker-compose up --build
 Simulated version :          
 docker-compose -f docker-compose_no_mic_version.yml up --build        
 
-In this version there is no mic so open another terminal and connect to the naoqi server to send the answer after launching the docker-compose file :      
-docker attach naoqi_bridge
+In this version there is no mic so open another terminal and connect to the naoqi server to send the answer after launching the docker-compose file (it is how you will answer) :      
+docker attach naoqi_bridge         
+
+You'll see on the terminal but also on the head of your simulated bot the question.        

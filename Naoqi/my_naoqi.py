@@ -9,16 +9,17 @@ print("Connecting to Akinator server...")
 socket = context.socket(zmq.REQ) # REQ = Request
 socket.connect("tcp://akinator_server:5555")
 
-#robot_ip = "host.docker.internal"  # Only for simulation
+# --- Naoqi Setup ---
 robot_ip = "192.168.2.121" # Real robot IP
 robot_port = 9559
-list_of_words = ["yes", "no", "i don't know"]
+list_of_words = ["yes", "no", "i don't know"] # We'll only handle these three answers
 
-# Create a broker to handle modules and events
-broker = ALBroker("myBroker", "0.0.0.0", 0, robot_ip, robot_port)
-print("ALBroker created. Waiting a bit...")
-time.sleep(2) # Wait for everything to settle (SpeechRecognition etc...)
-print("Attempting to create proxies...") 
+try:
+    broker = ALBroker("myBroker", "0.0.0.0", 0, robot_ip, robot_port)
+    print("ALBroker created.")
+except RuntimeError:
+    print("Could not connect to Naoqi. Check robot_ip and Choregraphe.")
+    sys.exit(1)
 
 class SpeechRecognitionModule(ALModule):
     def __init__(self, name):
@@ -34,6 +35,7 @@ class SpeechRecognitionModule(ALModule):
         self.new_value = True
         self.value = word
 
+print("Attempting to create proxies...") 
 # Instantiate objects
 speech_recog = ALProxy("ALSpeechRecognition", robot_ip, robot_port) # Not working in simulation because no microphone
 tts = ALProxy("ALTextToSpeech", robot_ip, robot_port)
@@ -50,37 +52,44 @@ speech_recog.subscribe("SpeechRecognitionModule")
 memory.subscribeToEvent("WordRecognized", "SpeechRecognitionModule", "onWordRecognized")
 
 try:  
-    while True:
-        # Request the next question from the Py3 server
-        socket.send_string("next_q")
-        
-        # Get the question
-        question = socket.recv_string()
+    # Send to akinator server to get the first question
+    print("Sending initial 'next_q' to get first question...")
+    socket.send_string("next_q")
+    question = socket.recv_string()
 
+    while True:
         if question.startswith("FINAL:"):
-            # Game is over
+            # End of the game, akinator sent the guess
             guess = question.replace("FINAL:", "")
             print("Final guess: " + guess)
-            tts.say("Are you thinking about " + guess)
+            tts.say(str("Are you thinking about " + guess))
             break
 
         print(question)
-        tts.say(question)
+        tts.say(str(question))
         
         # Wait for speech input
         while not obj_recognition.new_value:
             time.sleep(0.1)
         obj_recognition.new_value = False
         
-        # Send the answer back to the Py3 server
+        if obj_recognition.value.lower() == "stop":
+            print("User requested STOP.")
+            break # Go to "finally" section
+
+        # Send the answer back to the akinator server
         print("Sending answer: " + obj_recognition.value.lower())
         socket.send_string(obj_recognition.value.lower())
         
-        # Receive the confirmation (the next question) in the next loop
-        _ = socket.recv_string() # This will be the next question, but we'll grab it at the top of the loop
+        # Receive the next question OR the final guess
+        question = socket.recv_string() 
 
 
 finally:
-    socket.send_string("STOP") # Tell the server to shut down
+    # Sending "STOP" to close both containers.
+    print("Game over. Sending final STOP signal.")
+    socket.send_string("STOP") 
     broker.shutdown()
     sys.exit(0)
+
+
