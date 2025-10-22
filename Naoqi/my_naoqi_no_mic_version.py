@@ -59,15 +59,15 @@ try:
             final_line = "Are you thinking about " + guess
             print("Final guess: " + guess)
             if not terminal_mode:
-                # tts.say(final_line) # Don't work in simulation don't know why
+                tts.say(str(final_line)) # Don't work in simulation don't know why
                 pass
             break # Go to "finally" section
 
         # Ask question and get answer 
         print(question)
         if not terminal_mode:
-                # tts.say(question) # Don't work in simulation don't know why
-                pass
+            tts.say(str(question))
+            pass
         
         # Wait for shell input
         answer = get_shell_input()
