@@ -15,10 +15,12 @@ services:
       context: .
       dockerfile: naoqi.Dockerfile
     container_name: naoqi_bridge
+    tty: true
+    stdin_open: true
     # This allows the container to access your host machine
     # (and Choregraphe) using the DNS name "host.docker.internal"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-      - "nao_host:192.168.2.121"
+      #- "nao_host:192.168.2.121"
     depends_on:
       - akinator_server

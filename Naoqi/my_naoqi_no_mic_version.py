@@ -10,7 +10,7 @@ socket = context.socket(zmq.REQ) # REQ = Request
 socket.connect("tcp://akinator_server:5555")
 
 # --- Naoqi Setup ---
-robot_ip = "host.docker.internal"
+robot_ip = "192.168.2.121" #"host.docker.internal"
 robot_port = 9559
 valid_answers = ["yes", "no", "i don't know"] # We'll only handle these three answers
 

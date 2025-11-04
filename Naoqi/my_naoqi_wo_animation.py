@@ -1,8 +1,7 @@
 from naoqi import ALProxy, ALModule, ALBroker
 import sys
 import time
-import zmq
-import threading
+import zmq 
 
 # --- Setup ZMQ Client ---
 context = zmq.Context()
@@ -31,73 +30,13 @@ speech_recog = ALProxy("ALSpeechRecognition", robot_ip, robot_port) # Not workin
 tts = ALProxy("ALTextToSpeech", robot_ip, robot_port)
 memory = ALProxy("ALMemory", robot_ip, robot_port)
 
-print("Setting up animation and behavior proxies...")
-try:
-    animated_speech = ALProxy("ALAnimatedSpeech", robot_ip, robot_port)
-    try:
-        animated_speech.setBodyLanguageMode("contextual")
-    except Exception:
-        pass
-except Exception:
-    animated_speech = None
-
-try:
-    animation_player = ALProxy("ALAnimationPlayer", robot_ip, robot_port)
-except Exception:
-    animation_player = None
-
-try:
-    behavior_mngr = ALProxy("ALBehaviorManager", robot_ip, robot_port)
-except Exception:
-    behavior_mngr = None
-
-print("Proxies created.")
-
 # Configure speech recognition
 speech_recog.pause(True)
 speech_recog.setVocabulary(list_of_words, False) # Help reduce false positives
 speech_recog.pause(False)
 
-# Subscribe once before the loop
-# Use a simple subscription name (not the ALModule name)
 sr_sub_name = "AkinatorSR"
 speech_recog.subscribe(sr_sub_name)
-
-def _run_animation(anim_name):
-    if not anim_name or not animation_player:
-        return
-    try:
-        animation_player.run(anim_name)
-    except Exception:
-        # animation may not exist on robot so ignore safely
-        pass
-
-def play_animation(anim_name):
-    """Play a named animation (blocking)."""
-    if animation_player:
-        try:
-            animation_player.run(anim_name)
-        except Exception:
-            pass
-
-def say_with_animation(text, anim_name=None):
-    """Speak using ALAnimatedSpeech if available; optionally start an animation concurrently."""
-    # start animation in a background thread so speech and animation can overlap
-    if anim_name and animation_player:
-        threading.Thread(target=_run_animation, args=(anim_name,), daemon=True).start()
-    if animated_speech:
-        try:
-            animated_speech.say(text)
-            return
-        except Exception:
-            pass
-    # fallback
-    try:
-        tts.say(text)
-    except Exception:
-        pass
-
-play_animation("animations/Stand/Emotions/Positive/Happy_1") # Play a greeting animation at start
 
 try:  
     # Send to akinator server to get the first question
@@ -115,13 +54,11 @@ try:
             # End of the game, akinator sent the guess
             guess = question.replace("FINAL:", "")
             print("Final guess: " + guess)
-            play_animation("animations/Stand/Emotions/Positive/Happy_1")
             tts.say(str("Are you thinking about " + guess))
             break
 
         print(question)
         tts.say(str(question))
-        play_animation("animations/Sit/BodyTalk/BodyTalk_3")
         
         # Loop until we get a valid recognized word meeting confidence and not same as last
         while True:
